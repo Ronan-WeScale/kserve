@@ -1,0 +1,34 @@
+apiVersion: "serving.kserve.io/v1alpha1"
+kind: ClusterStorageContainer
+metadata:
+  name: default
+spec:
+  container:
+    name: storage-initializer
+    image: "{{ .Values.kserve.storage.image }}:{{ .Values.kserve.storage.tag }}"
+    resources:
+      {{- with .Values.kserve.storage.resources }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+    securityContext:
+      {{- with .Values.kserve.storage.containerSecurityContext}}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+  supportedUriFormats:
+    {{- with .Values.kserve.storage.supportedUriFormats}}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  workloadType: {{ .Values.kserve.storage.workloadType }}
+  supportsMultiModelDownload: {{ .Values.kserve.storage.supportsMultiModelDownload }}
+---
+{{ if .Values.kserve.storage.additionalStorage }}
+{{ range $storage, $spec := .Values.kserve.storage.additionalStorage }}
+apiVersion: "serving.kserve.io/v1alpha1"
+kind: ClusterStorageContainer
+metadata:
+  name: {{ $storage }}
+spec:
+{{- tpl $spec $ | nindent 2 }}
+---
+{{ end }}
+{{ end }}
